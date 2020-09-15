@@ -1,140 +1,282 @@
-//Use the D3 library to read in `samples.json`.
-//Create a horizontal bar chart with a dropdown menu to display the top 10 OTUs found in that individual.
-// Initializes the page with a default plot
-function init() {
-    d3.json("samples.json").then(function(data){
-      console.log(data);
-    
-      var samp_data = data.names;
-      //Populate drop down menu
-      var dropdownMenu = d3.select("#selDataset");
-      samp_data.forEach(function(name){dropdownMenu.append("option").text(name).property("value",name)})
-  
-      var samp_val = data.samples[0].sample_values;
-      var otuIds = data.samples[0].otu_ids;
-      var otuLabels = data.samples[0].otu_labels;
-      var otu_ids = otuIds.map(d => `OTU ${d.toString()}`)
-      var sliced = otu_ids.slice(0,10);
-  
-      var meta_id = data.metadata[0].id;
-      var meta_eth = data.metadata[0].ethnicity;
-      var meta_gen = data.metadata[0].gender;
-      var meta_age = data.metadata[0].age;
-      var meta_loc = data.metadata[0].location;
-      var meta_type = data.metadata[0].bbtype;
-      var meta_freq = data.metadata[0].wfreq;
-  
-      var trace2 = {
-        x: otuIds,
-        y: samp_val,
+// Initialize array for source data
+var sourceData = [];
+
+// Load source data, make data promise, and push data to array
+d3.json("samples.json").then(function(data) {
+    sourceData.push(data);
+
+    // Populate dropdown menu
+    var dropdownList = sourceData[0].names;
+    var dropdownID = -1
+    dropdownList.forEach(function(item) {
+        var option = document.createElement("option");
+        option.text = item;
+        option.id = dropdownID + 1;
+        document.getElementById("selDataset").appendChild(option);
+        dropdownID += 1
+    });
+
+    // Locate datapoints for default bar and bubble charts
+    var sampleValues = sourceData[0].samples[0].sample_values;
+    var barValues = [];
+    sampleValues.slice([0], [10]).map((item, i) => {
+        barValues.push(item);
+    });
+    var otuIDS = sourceData[0].samples[0].otu_ids;
+    var barLabels = [];
+    otuIDS.slice([0], [10]).map((item, i) => {
+        barLabels.push(`OTU ${item}`);
+    });
+    var otuLabels = sourceData[0].samples[0].otu_labels;
+    var hoverLabels = [];
+    otuLabels.slice([0], [10]).map((item, i) => {
+        hoverLabels.push(item);
+    });
+         
+    // Build default bar chart
+    var barTrace = {
+        x: barValues.reverse(),
+        y: barLabels.reverse(),
+        type: "bar",
+        orientation: "h",
+        text: hoverLabels.reverse()
+    };
+
+    var barData = [barTrace];
+    Plotly.newPlot("bar", barData);
+ 
+    // Build default bubble chart
+    var bubbleTrace = {
+        x: otuIDS,
+        y: sampleValues,
         text: otuLabels,
         mode: 'markers',
         marker: {
-          color: otuIds,
-          size: samp_val}
-      };
-      var layout = {title: "Bubble Chart",xaxis: {title: 'OTU IDs'}};
-      data2 = [trace2];
-      Plotly.newPlot("bubble",data2,layout)
-      var trace1 = {
-        x: samp_val,
-        y: sliced,
-        text: otuLabels,
-        type: "bar",
-        orientation: "h"
-      }
-      data = [trace1];
-      Plotly.newPlot("bar", data);
-      //Create demogaphic table
-      var dem = d3.select("#sample-metadata");
-      
-      dem.append("div").text(`id: ${meta_id}`);
-      dem.append("div").text(`ethnicity: ${meta_eth}`);
-      dem.append("div").text(`gender: ${meta_gen}`);
-      dem.append("div").text(`age: ${meta_age}`);
-      dem.append("div").text(`location: ${meta_loc}`);
-      dem.append("div").text(`bbtype: ${meta_type}`);
-      dem.append("div").text(`wfreq: ${meta_freq}`);
-  
-      //Create gauge chart
-      var data = [
-        {
-          domain: { x: [0, 1], y: [0, 1] },
-          value: meta_freq,
-          title: {text: "Belly Button Washing Frequency"},
-          type: "indicator",
-          mode: "gauge+number+delta",
-          gauge: {
-            axis: { range: [null, 9] },
-            steps: [
-              { range: [0, 9], color: "lightgreen" }]    
-            }
+            size: sampleValues,
+            color: otuIDS
         }
-      ];
-      Plotly.newPlot('gauge', data);
-    });
-  }
-  // Call updatePlotly() when a change takes place to the DOM
-  d3.selectAll("#selDataset").on("change", updatePlotly);
-    // This function is called when a dropdown menu item is selected
-  function updatePlotly(){
-    d3.json("samples.json").then(function(data){
-      // Use D3 to select the dropdown menu
-      var dropdownMenu = d3.select("#selDataset");
-        // Assign the value of the dropdown menu option to a variable
-      var dataset = dropdownMenu.property("value");
-      samp_data = data.samples;
-  
-      var filtered_data = samp_data.filter(d => d.id == dataset)[0]
-      samp_val = filtered_data.sample_values;
-     
-      var filt_ids = samp_data.filter(d => d.id == dataset)[0]
-      otuIds = filt_ids.otu_ids;
-      
-      var filt_lab = samp_data.filter(d => d.id == dataset)[0]
-      otuLabels = filt_lab.otu_labels;
+    };
+
+    var layout = {
+        xaxis: {
+            title: "OTU ID"
+        }
+    };
+
+    var bubbleData = [bubbleTrace];
+    Plotly.newPlot("bubble", bubbleData, layout);
+
+    // Populate default demographic info
+    var name = sourceData[0].metadata[0].id;
+    var ethnicity = sourceData[0].metadata[0].ethnicity;
+    var gender = sourceData[0].metadata[0].gender;
+    var age = sourceData[0].metadata[0].age;
+    var location = sourceData[0].metadata[0].location;
+    var bbtype = sourceData[0].metadata[0].bbtype;
+    var wfreq = sourceData[0].metadata[0].wfreq;
+    document.getElementById("sample-metadata")
+        .innerHTML += `<p><b>ID: </b>${name}<br><b>Ethnicity: </b>${ethnicity}<br><b>Gender: </b>${gender}<br><b>Age: </b>${age}<br><b>Location: </b>${location}<br><b>BBType: </b>${bbtype}<br><b>WFreq: </b>${wfreq}</p>`;
     
-      var otu_ids = otuIds.map(d => `OTU ${d.toString()}`)
-      var sliced = (otu_ids.slice(0,10))
+    // Build default gauge chart
+    var gaugeTrace = {
+        type: "pie",
+        showlegend: false,
+        hole: .4,
+        rotation: 90,
+        values: [100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100],
+        text: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ""],
+        direction: "clockwise",
+        textinfo: "text",
+        textposition: "inside",
+        marker: {
+            colors: ["rgb(102, 255, 102)", "rgb(77, 255, 77)", "rgb(26, 255, 26)", "rgb(0, 255, 0)", "rgb(0, 230, 0)", "rgb(0, 204, 0)", "rgb(0, 179, 0)", "rgb(0, 153, 0)", "rgb(0, 128, 0)", "rgb(0, 102, 0)", "white"],
+            line: {
+                color: "white",
+                width: 1
+            }
+        },
+    };
     
-  
-      Plotly.restyle("bar", "x", [samp_val]);
-      Plotly.restyle("bar", "y", [sliced]);
-      Plotly.restyle("bubble","x",[otuIds]);
-      Plotly.restyle("bubble","y",[samp_val]);
-  
-      meta_data = data.metadata;
-  
-      var filtered_id = meta_data.filter(d => d.id == dataset)[0]
-      meta_id = filtered_id.id;
-      var filtered_eth = meta_data.filter(d => d.id == dataset)[0]
-      meta_eth = filtered_eth.ethnicity;
-      var filtered_gen = meta_data.filter(d => d.id == dataset)[0]
-      meta_gen = filtered_gen.gender;
-      var filtered_age = meta_data.filter(d => d.id == dataset)[0]
-      meta_age = filtered_age.age;
-      var filtered_loc = meta_data.filter(d => d.id == dataset)[0]
-      meta_loc = filtered_loc.location;
-      var filtered_type = meta_data.filter(d => d.id == dataset)[0]
-      meta_type = filtered_type.bbtype;
-      var filtered_freq = meta_data.filter(d => d.id == dataset)[0]
-      meta_freq = filtered_freq.wfreq;
-  
-      var dem = d3.select("#sample-metadata");
-      dem.html("");
-      
-      dem.append("div").text(`id: ${meta_id}`);
-      dem.append("div").text(`ethnicity: ${meta_eth}`);
-      dem.append("div").text(`gender: ${meta_gen}`);
-      dem.append("div").text(`age: ${meta_age}`);
-      dem.append("div").text(`location: ${meta_loc}`);
-      dem.append("div").text(`bbtype: ${meta_type}`);
-      dem.append("div").text(`wfreq: ${meta_freq}`);
-  
-      Plotly.restyle("gauge","value",[meta_freq]);
-  
-    });
+    var layout = {
+        title: "<b>" + "Belly Button Washing Frequency" + "</b>" + "<br>" + "Scrubs Per Week",
+        shapes:[{
+            type: "line",
+            x0: .50,
+            y0: .50,
+            x1: .28,
+            y1: .74,
+            line: {
+                color: 'black',
+                width: 2
+            },
+        }],
+        xaxis: {visible: false, range: [-1, 1]},
+        yaxis: {visible: false, range: [-1, 1]}
+    };
+            
+    var gaugeData = [gaugeTrace];
+    Plotly.newPlot("gauge", gaugeData, layout);    
     
+    // Create function to handle dropdown menu change
+    document.getElementById("selDataset").onchange = function() {
+
+        // Depopulate demographic info
+        document.getElementById("sample-metadata")
+            .innerHTML = ""
+
+        // Set dropdown variables for user-selected data
+        var dropdownMenu = document.getElementById("selDataset");
+        var dropdownID = dropdownMenu.selectedIndex
+
+        // Locate datapoints for user-selected bar and bubble charts
+        var sampleValues = sourceData[0].samples[dropdownID].sample_values;
+        var barValues = [];
+        sampleValues.slice([0], [10]).map((item, i) => {
+            barValues.push(item);
+        });
+        var otuIDS = sourceData[0].samples[dropdownID].otu_ids;
+        var barLabels = [];
+        otuIDS.slice([0], [10]).map((item, i) => {
+            barLabels.push(`OTU ${item}`);
+        });
+        var otuLabels = sourceData[0].samples[dropdownID].otu_labels;
+        var hoverLabels = [];
+        otuLabels.slice([0], [10]).map((item, i) => {
+            hoverLabels.push(item);
+        });
+        
+        // Build user-selected bar chart
+        var barTrace = {
+            x: barValues.reverse(),
+            y: barLabels.reverse(),
+            type: "bar",
+            orientation: "h",
+            text: hoverLabels.reverse()
+        };
+        var barData = [barTrace];
+        Plotly.newPlot("bar", barData);
+
+        // Build user-selected bubble chart
+        var bubbleTrace = {
+            x: otuIDS,
+            y: sampleValues,
+            text: otuLabels,
+            mode: 'markers',
+            marker: {
+                size: sampleValues,
+                color: otuIDS
+            }
+        };
+
+        var bubbleLayout = {
+            xaxis: {
+                title: "OTU ID"
+            }
+        };
+
+        var bubbleData = [bubbleTrace];
+        Plotly.newPlot("bubble", bubbleData, bubbleLayout);
+
+        // Build user-selected demographic info
+        var name = sourceData[0].metadata[dropdownID].id;
+        var ethnicity = sourceData[0].metadata[dropdownID].ethnicity;
+        var gender = sourceData[0].metadata[dropdownID].gender;
+        var age = sourceData[0].metadata[dropdownID].age;
+        var location = sourceData[0].metadata[dropdownID].location;
+        var bbtype = sourceData[0].metadata[dropdownID].bbtype;
+        var wfreq = sourceData[0].metadata[dropdownID].wfreq;
+        document.getElementById("sample-metadata")
+            .innerHTML += `<p><b>ID: </b>${name}<br><b>Ethnicity: </b>${ethnicity}<br><b>Gender: </b>${gender}<br><b>Age: </b>${age}<br><b>Location: </b>${location}<br><b>BBType: </b>${bbtype}<br><b>WFreq: </b>${wfreq}</p>`;          
+    
+        // Build user-selected gauge chart
+        var gaugeTrace = {
+            type: "pie",
+            showlegend: false,
+            hole: .4,
+            rotation: 90,
+            values: [100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100 / 10, 100],
+            text: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ""],
+            direction: "clockwise",
+            textinfo: "text",
+            textposition: "inside",
+            marker: {
+                colors: ["rgb(102, 255, 102)", "rgb(77, 255, 77)", "rgb(26, 255, 26)", "rgb(0, 255, 0)", "rgb(0, 230, 0)", "rgb(0, 204, 0)", "rgb(0, 179, 0)", "rgb(0, 153, 0)", "rgb(0, 128, 0)", "rgb(0, 102, 0)", "white"],
+                line: {
+                    color: "white",
+                    width: 1
+                }
+            },
+        };
+
+        switch (wfreq) {
+            case 0:
+                var pointX = .25;
+                var pointY = .54;
+                break;
+            case 1:
+                var pointX = .25;
+                var pointY = .64;
+                break;
+            case 2:
+                var pointX = .28;
+                var pointY = .74;
+                break;
+            case 3:
+                var pointX = .36;
+                var pointY = .81;
+                break;
+            case 4:
+                var pointX = .46;
+                var pointY = .81;
+                break;
+            case 5:
+                var pointX = .55;
+                var pointY = .81;
+                break;
+            case 6:
+                var pointX = .64;
+                var pointY = .81;
+                break;
+            case 7:
+                var pointX = .72;
+                var pointY = .74;
+                break;
+            case 8:
+                var pointX = .73;
+                var pointY = .63;
+                break;
+            case 9:
+                var pointX = .75;
+                var pointY = .54;
+                break;
+            default:
+                var pointX = .50;
+                var pointY = .50;
+        }
+
+        var layout = {
+            title: "<b>" + "Belly Button Washing Frequency" + "</b>" + "<br>" + "Scrubs Per Week",
+            shapes:[{
+                type: "line",
+                x0: .50,
+                y0: .50,
+                x1: pointX,
+                y1: pointY,
+                line: {
+                  color: 'black',
+                  width: 2
+                },
+            }],
+            xaxis: {visible: false, range: [-1, 1]},
+            yaxis: {visible: false, range: [-1, 1]}
+        };
+        
+        var gaugeData = [gaugeTrace];
+        Plotly.newPlot("gauge", gaugeData, layout);
+        console.log(wfreq);
+
+    };
+});
   
-  };
-  init();
+// Set data promise
+const dataPromise = d3.json("samples.json");
