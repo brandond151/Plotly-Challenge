@@ -1,7 +1,7 @@
 // Initialize array for source data
 var sourceData = [];
 
-// Load source data, make data promise, and push data to array
+// Load source data, make data promise, and push data to array, promise at bottom
 d3.json("samples.json").then(function(data) {
     sourceData.push(data);
 
@@ -16,7 +16,7 @@ d3.json("samples.json").then(function(data) {
         dropdownID += 1
     });
 
-    // Locate datapoints for default bar and bubble charts
+    // Points for default bar and bubble charts
     var sampleValues = sourceData[0].samples[0].sample_values;
     var barValues = [];
     sampleValues.slice([0], [10]).map((item, i) => {
@@ -33,7 +33,7 @@ d3.json("samples.json").then(function(data) {
         hoverLabels.push(item);
     });
          
-    // Build default bar chart
+    // ar chart
     var barTrace = {
         x: barValues.reverse(),
         y: barLabels.reverse(),
@@ -45,7 +45,7 @@ d3.json("samples.json").then(function(data) {
     var barData = [barTrace];
     Plotly.newPlot("bar", barData);
  
-    // Build default bubble chart
+    // bubble chart
     var bubbleTrace = {
         x: otuIDS,
         y: sampleValues,
@@ -77,7 +77,7 @@ d3.json("samples.json").then(function(data) {
     document.getElementById("sample-metadata")
         .innerHTML += `<p><b>ID: </b>${name}<br><b>Ethnicity: </b>${ethnicity}<br><b>Gender: </b>${gender}<br><b>Age: </b>${age}<br><b>Location: </b>${location}<br><b>BBType: </b>${bbtype}<br><b>WFreq: </b>${wfreq}</p>`;
     
-    // Build default gauge chart
+    // gauge chart
     var gaugeTrace = {
         type: "pie",
         showlegend: false,
@@ -89,7 +89,7 @@ d3.json("samples.json").then(function(data) {
         textinfo: "text",
         textposition: "inside",
         marker: {
-            colors: ["rgb(102, 255, 102)", "rgb(77, 255, 77)", "rgb(26, 255, 26)", "rgb(0, 255, 0)", "rgb(0, 230, 0)", "rgb(0, 204, 0)", "rgb(0, 179, 0)", "rgb(0, 153, 0)", "rgb(0, 128, 0)", "rgb(0, 102, 0)", "white"],
+            colors: ["rgb(255, 255, 255)", "rgb(255, 230, 230)", "rgb(255, 204, 204)", "	rgb(255, 179, 179)", "rgb(255, 153, 153)", "rgb(255, 128, 128)", "rgb(255, 102, 102)", "rgb(255, 77, 77)", "rgb(255, 51, 51)", "rgb(255, 26, 26)", "rgb(255, 0, 0)", "	rgb(230, 0, 0)", "white"],
             line: {
                 color: "white",
                 width: 1
@@ -117,10 +117,10 @@ d3.json("samples.json").then(function(data) {
     var gaugeData = [gaugeTrace];
     Plotly.newPlot("gauge", gaugeData, layout);    
     
-    // Create function to handle dropdown menu change
+    //dropdown menu change
     document.getElementById("selDataset").onchange = function() {
 
-        // Depopulate demographic info
+        // demographic info
         document.getElementById("sample-metadata")
             .innerHTML = ""
 
@@ -128,7 +128,7 @@ d3.json("samples.json").then(function(data) {
         var dropdownMenu = document.getElementById("selDataset");
         var dropdownID = dropdownMenu.selectedIndex
 
-        // Locate datapoints for user-selected bar and bubble charts
+        // Points for user-selected bar and bubble charts
         var sampleValues = sourceData[0].samples[dropdownID].sample_values;
         var barValues = [];
         sampleValues.slice([0], [10]).map((item, i) => {
@@ -156,7 +156,7 @@ d3.json("samples.json").then(function(data) {
         var barData = [barTrace];
         Plotly.newPlot("bar", barData);
 
-        // Build user-selected bubble chart
+        
         var bubbleTrace = {
             x: otuIDS,
             y: sampleValues,
@@ -177,7 +177,7 @@ d3.json("samples.json").then(function(data) {
         var bubbleData = [bubbleTrace];
         Plotly.newPlot("bubble", bubbleData, bubbleLayout);
 
-        // Build user-selected demographic info
+        
         var name = sourceData[0].metadata[dropdownID].id;
         var ethnicity = sourceData[0].metadata[dropdownID].ethnicity;
         var gender = sourceData[0].metadata[dropdownID].gender;
@@ -188,7 +188,7 @@ d3.json("samples.json").then(function(data) {
         document.getElementById("sample-metadata")
             .innerHTML += `<p><b>ID: </b>${name}<br><b>Ethnicity: </b>${ethnicity}<br><b>Gender: </b>${gender}<br><b>Age: </b>${age}<br><b>Location: </b>${location}<br><b>BBType: </b>${bbtype}<br><b>WFreq: </b>${wfreq}</p>`;          
     
-        // Build user-selected gauge chart
+        
         var gaugeTrace = {
             type: "pie",
             showlegend: false,
@@ -200,7 +200,7 @@ d3.json("samples.json").then(function(data) {
             textinfo: "text",
             textposition: "inside",
             marker: {
-                colors: ["rgb(102, 255, 102)", "rgb(77, 255, 77)", "rgb(26, 255, 26)", "rgb(0, 255, 0)", "rgb(0, 230, 0)", "rgb(0, 204, 0)", "rgb(0, 179, 0)", "rgb(0, 153, 0)", "rgb(0, 128, 0)", "rgb(0, 102, 0)", "white"],
+                colors: ["rgb(255, 255, 255)", "rgb(255, 230, 230)", "rgb(255, 204, 204)", "	rgb(255, 179, 179)", "rgb(255, 153, 153)", "rgb(255, 128, 128)", "rgb(255, 102, 102)", "rgb(255, 77, 77)", "rgb(255, 51, 51)", "rgb(255, 26, 26)", "rgb(255, 0, 0)", "	rgb(230, 0, 0)", "white"],
                 line: {
                     color: "white",
                     width: 1
